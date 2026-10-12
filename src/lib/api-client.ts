@@ -1,4 +1,31 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+/**
+ * AcadNexa Core API Client
+ * 
+ * Strict Client-to-Backend Architecture:
+ * - Dynamically resolves `process.env.NEXT_PUBLIC_API_URL`
+ * - Strictly targets FastAPI backend (port 8000 in dev, or deployed API host in prod)
+ * - Guards against accidental loopbacks to the Next.js frontend (port 3000)
+ */
+
+export function getCleanBaseUrl(): string {
+  const rawUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+  let url = rawUrl.trim().replace(/\/+$/, "");
+
+  // Guard against rookie mistake: Accidental loopback to Next.js port 3000
+  if (url.includes(":3000")) {
+    console.warn(
+      "[Config Audit] Warning: NEXT_PUBLIC_API_URL was set to Next.js port 3000! Auto-redirecting call to FastAPI backend port 8000."
+    );
+    url = url.replace(":3000", ":8000");
+  }
+
+  // Ensure /api/v1 prefix is appended if only base host was provided
+  if (!url.endsWith("/api/v1") && !url.includes("/api/")) {
+    url = `${url}/api/v1`;
+  }
+
+  return url;
+}
 
 export function getAuthToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -64,7 +91,11 @@ export async function apiClient<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const url = endpoint.startsWith("http") ? endpoint : `${API_BASE_URL}${endpoint}`;
+  const baseUrl = getCleanBaseUrl();
+  const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  const url = endpoint.startsWith("http://") || endpoint.startsWith("https://")
+    ? endpoint
+    : `${baseUrl}${cleanEndpoint}`;
 
   const response = await fetch(url, {
     ...options,
