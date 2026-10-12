@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Sidebar } from "@/components/shared/sidebar";
 import { Topbar } from "@/components/shared/topbar";
+import { AuthGuard } from "@/components/shared/auth-guard";
 import { UserProfile } from "@/types";
 import { getMeApi } from "@/lib/api";
 
@@ -16,21 +17,23 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   }, []);
 
   return (
-    <div className="min-h-screen flex antialiased bg-background text-foreground">
-      <Sidebar
-        role="STUDENT"
-        userName={user?.full_name || "Aarav Sharma"}
-        userIdentifier={user?.roll_number || "1AT23CS001"}
-      />
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <Topbar
+    <AuthGuard allowedRole="STUDENT">
+      <div className="min-h-screen flex antialiased bg-background text-foreground">
+        <Sidebar
+          role="STUDENT"
           userName={user?.full_name || "Aarav Sharma"}
-          roleName="B.Tech • Computer Science"
+          userIdentifier={user?.roll_number || "1AT23CS001"}
         />
-        <main className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full">
-          {children}
-        </main>
+        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+          <Topbar
+            userName={user?.full_name || "Aarav Sharma"}
+            roleName="B.Tech • Computer Science"
+          />
+          <main className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }

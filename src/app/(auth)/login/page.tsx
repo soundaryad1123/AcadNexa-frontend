@@ -24,13 +24,13 @@ export default function LoginPage() {
     try {
       const res = await loginApi({ email, password, college_slug: collegeSlug });
       if (res.role === "ADMIN") {
-        router.push("/admin/dashboard");
+        router.replace("/admin/dashboard");
       } else if (res.role === "FACULTY") {
-        router.push("/faculty/dashboard");
+        router.replace("/faculty/dashboard");
       } else if (res.role === "STUDENT") {
-        router.push("/student/dashboard");
+        router.replace("/student/dashboard");
       } else {
-        router.push("/");
+        router.replace("/");
       }
     } catch (err: any) {
       setError(err?.message || "Invalid credentials. Please verify your email and password.");

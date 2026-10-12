@@ -1,4 +1,4 @@
-import { apiClient, setAuthToken, clearAuthToken } from "./api-client";
+import { apiClient, setAuthSession, clearAuthSession } from "./api-client";
 import {
   LoginResponse,
   UserProfile,
@@ -21,10 +21,7 @@ export async function loginApi(payload: { email: string; password: string; colle
     body: JSON.stringify(payload),
   });
   if (data?.access_token) {
-    setAuthToken(data.access_token);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("acadnexa_user", JSON.stringify(data));
-    }
+    setAuthSession(data.access_token, data.role, data);
   }
   return data;
 }
@@ -33,10 +30,22 @@ export async function getMeApi(): Promise<UserProfile> {
   return apiClient<UserProfile>("/auth/me");
 }
 
-export function logoutApi(): void {
-  clearAuthToken();
-  if (typeof window !== "undefined") {
-    window.location.href = "/login";
+export async function logoutApi(): Promise<void> {
+  try {
+    // 1. Invalidate session server-side
+    await apiClient<{ message: string }>("/auth/logout", {
+      method: "POST",
+    });
+  } catch (err) {
+    console.warn("Server logout notification skipped:", err);
+  } finally {
+    // 2. Destroy all client-side authentication tokens, state, and cookies
+    clearAuthSession();
+
+    // 3. Hard replace navigation to purge browser history entry
+    if (typeof window !== "undefined") {
+      window.location.replace("/login");
+    }
   }
 }
 
