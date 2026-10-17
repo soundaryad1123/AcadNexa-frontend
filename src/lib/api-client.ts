@@ -8,7 +8,16 @@
  */
 
 export function getCleanBaseUrl(): string {
-  const rawUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+  let rawUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  // Auto-detect: If running on a cloud deployment (e.g. *.vercel.app) and env var is missing or defaulted to localhost
+  if (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+    if (!rawUrl || rawUrl.includes("localhost") || rawUrl.includes("127.0.0.1")) {
+      rawUrl = "https://acadnexa-backend.onrender.com/api/v1";
+    }
+  }
+
+  rawUrl = rawUrl || "http://localhost:8000/api/v1";
   let url = rawUrl.trim().replace(/\/+$/, "");
 
   // Guard against rookie mistake: Accidental loopback to Next.js port 3000
